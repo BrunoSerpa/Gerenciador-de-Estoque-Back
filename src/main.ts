@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 
 import { ProdutoRouter } from "./endpoints/Produtos";
+import { CadastroRouter } from "./endpoints/Cadastro";
 
 require("dotenv-ts").config();
 
@@ -20,5 +21,6 @@ app.listen(
 );
 
 app.use("/produto", ProdutoRouter);
+app.use("/cadastro", CadastroRouter);
 
 module.exports = app;
