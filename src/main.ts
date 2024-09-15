@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 
+import { ProdutoRouter } from "./endpoints/Produtos";
 
 require("dotenv-ts").config();
 
@@ -17,5 +18,7 @@ app.listen(
     console.log(`API aberta na porta ${PORT}`);
   }
 );
+
+app.use("/produto", ProdutoRouter);
 
 module.exports = app;
