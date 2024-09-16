@@ -11,4 +11,10 @@ interface ItemCadastrar {
     preco: number;
 };
 
-export { Item, ItemCadastrar };
+interface ItemVisualizar {
+    id: number;
+    data_compra: Date;
+    preco: number;
+};
+
+export { Item, ItemCadastrar, ItemVisualizar };
