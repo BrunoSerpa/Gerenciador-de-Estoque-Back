@@ -8,4 +8,3 @@ function HashPasswordCompare(hash, password) {
     return (0, bcrypt_ts_1.compareSync)(password, hash);
 }
 module.exports = { HashPassword, HashPasswordCompare };
-//# sourceMappingURL=bcrypt.js.map

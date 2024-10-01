@@ -22,11 +22,21 @@ router.post("", function (req, res) {
         const { nomes, marca, garantia, validade, preco } = req.body;
         let bdConn = null;
         try {
-            bdConn = yield (0, postgres_1.StartConnection)();
             let id_marca = null;
+            bdConn = yield (0, postgres_1.StartConnection)();
             if (typeof marca === "string") {
-                const resultMarca = yield (0, postgres_1.Query)(bdConn, "INSERT INTO marca (nome) VALUES ($1) RETURNING id;", [marca]);
-                id_marca = resultMarca.rows[0].id;
+                try {
+                    const resultadoMarca = yield (0, postgres_1.Query)(bdConn, "INSERT INTO marca (nome) VALUES ($1) RETURNING id;", [marca]);
+                    id_marca = resultadoMarca.rows[0].id;
+                }
+                catch (err) {
+                    const retorno = {
+                        errors: [err.message],
+                        msg: ["Falha ao cadastrar marca"],
+                        data: null,
+                    };
+                    res.status(500).send(retorno);
+                }
             }
             else if (typeof marca === "number") {
                 id_marca = marca;
@@ -35,16 +45,26 @@ router.post("", function (req, res) {
             const resultadoProduto = yield (0, postgres_1.Query)(bdConn, "INSERT INTO produto (id_marca, garantia, validade, preco, quantidade) VALUES ($1, $2, $3, $4, 0) RETURNING id;", [id_marca, garantia, validade, preco]);
             const id_produto = resultadoProduto.rows[0].id;
             if (nomes) {
-                for (const nome of nomes) {
-                    yield (0, postgres_1.Query)(bdConn, "INSERT INTO nome (id_produto, nome) VALUES ($1, $2);", [id_produto, nome]);
+                try {
+                    for (const nome of nomes) {
+                        yield (0, postgres_1.Query)(bdConn, "INSERT INTO nome (id_produto, nome) VALUES ($1, $2);", [id_produto, nome]);
+                    }
+                    ;
                 }
-                ;
+                catch (err) {
+                    const retorno = {
+                        errors: [err.message],
+                        msg: ["Falha ao cadastrar nomes"],
+                        data: null,
+                    };
+                    res.status(500).send(retorno);
+                }
             }
             ;
             const retorno = {
                 errors: [],
                 msg: ["Produto cadastrado com sucesso"],
-                data: resultadoProduto.rows,
+                data: resultadoProduto.rows[0],
             };
             res.status(200).send(retorno);
         }
@@ -63,19 +83,19 @@ router.post("", function (req, res) {
         ;
     });
 });
-router.get("", function (req, res) {
+router.get("", function (_req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         let bdConn = null;
         try {
             bdConn = yield (0, postgres_1.StartConnection)();
-            const marcas = yield (0, postgres_1.Query)(bdConn, "SELECT * FROM marca;", []);
-            const produtos = yield (0, postgres_1.Query)(bdConn, "SELECT * FROM produto;", []);
-            const nomes = yield (0, postgres_1.Query)(bdConn, "SELECT * FROM nome;", []);
-            const produtosFormatados = produtos.rows.map((produto) => {
+            const resultadoMarcas = yield (0, postgres_1.Query)(bdConn, "SELECT * FROM marca;", []);
+            const resultQuery = yield (0, postgres_1.Query)(bdConn, "SELECT * FROM produto;", []);
+            const resultadoNomes = yield (0, postgres_1.Query)(bdConn, "SELECT * FROM nome;", []);
+            const produtosFormatados = resultQuery.rows.map((produto) => {
                 const marcaProduto = produto.id_marca
-                    ? marcas.rows.find((marca) => marca.id === produto.id_marca)
+                    ? resultadoMarcas.rows.find((marca) => marca.id === produto.id_marca)
                     : undefined;
-                const nomesProduto = nomes.rows
+                const nomesProduto = resultadoNomes.rows
                     .filter((nome) => nome.id_produto === produto.id)
                     .map((nome) => ({
                     id: nome.id,
@@ -91,10 +111,23 @@ router.get("", function (req, res) {
                     marca: marcaProduto ? { id: marcaProduto.id, nome: marcaProduto.nome } : undefined
                 };
             });
+            const retorno = {
+                errors: [],
+                msg: ["Produtos listados com sucesso"],
+                data: {
+                    rows: produtosFormatados,
+                    fields: resultQuery.fields
+                }
+            };
             res.status(200).send(produtosFormatados);
         }
         catch (err) {
-            res.status(500).send(err);
+            const retorno = {
+                errors: [err.message],
+                msg: ["Falha ao listar produtos"],
+                data: null
+            };
+            res.status(500).send(retorno);
         }
         finally {
             if (bdConn)
@@ -109,24 +142,21 @@ router.delete("/:id", function (req, res) {
         let bdConn = null;
         try {
             bdConn = yield (0, postgres_1.StartConnection)();
-            const produtoExistente = yield (0, postgres_1.Query)(bdConn, "SELECT * FROM produto WHERE id = $1;", [id]);
-            if (produtoExistente.rows.length === 0) {
-                return res.status(404).send({
-                    errors: ["Produto não encontrado"],
-                    msg: "Nenhum produto foi encontrado com o ID fornecido."
-                });
-            }
-            ;
-            yield (0, postgres_1.Query)(bdConn, "DELETE FROM produto WHERE id = $1;", [id]);
-            res.status(200).send({
+            const resultQuery = yield (0, postgres_1.Query)(bdConn, "DELETE FROM produto WHERE id = $1;", [id]);
+            const retorno = {
                 errors: [],
-                msg: `Produto com ID ${id} deletado com sucesso.`
-            });
+                msg: ["Produto deletado com sucesso"],
+                data: {
+                    rows: resultQuery.rows,
+                    fields: resultQuery.fields
+                }
+            };
+            res.status(200).send(retorno);
         }
         catch (err) {
             res.status(500).send({
                 errors: [err.message],
-                msg: "Falha ao deletar o produto."
+                msg: "Falha ao deletar o produto"
             });
         }
         finally {
@@ -136,4 +166,3 @@ router.delete("/:id", function (req, res) {
         ;
     });
 });
-//# sourceMappingURL=Produtos.js.map

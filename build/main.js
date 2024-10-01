@@ -6,9 +6,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const os_1 = __importDefault(require("os"));
-const Produtos_1 = require("./endpoints/Produtos");
 const Cadastro_1 = require("./endpoints/Cadastro");
 const Itens_1 = require("./endpoints/Itens");
+const Marca_1 = require("./endpoints/Marca");
+const Nomes_1 = require("./endpoints/Nomes");
+const Produtos_1 = require("./endpoints/Produtos");
 require("dotenv-ts").config();
 const PORT = process.env.PORT || 3001;
 const app = (0, express_1.default)();
@@ -31,8 +33,9 @@ app.listen(PORT, function () {
     console.log(`API aberta na porta ${PORT}`);
     console.log(`Link Online: http://${ip}:${PORT}`);
 });
-app.use("/produto", Produtos_1.ProdutoRouter);
 app.use("/cadastro", Cadastro_1.CadastroRouter);
 app.use("/item", Itens_1.ItemRouter);
+app.use("/marcas", Marca_1.MarcaRouter);
+app.use("/nomes", Nomes_1.NomesRouter);
+app.use("/produto", Produtos_1.ProdutoRouter);
 module.exports = app;
-//# sourceMappingURL=main.js.map

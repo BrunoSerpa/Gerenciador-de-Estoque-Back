@@ -17,24 +17,37 @@ const express_1 = __importDefault(require("express"));
 const postgres_1 = require("../services/postgres");
 const router = express_1.default.Router();
 exports.ItemRouter = router;
-router.get("/:id", function (req, res) {
+router.get("/:id_produto", function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
+        const { id_produto } = req.params;
         let bdConn = null;
         try {
-            const { id } = req.params;
             bdConn = yield (0, postgres_1.StartConnection)();
-            const itens = yield (0, postgres_1.Query)(bdConn, "SELECT id, data_compra, preco::numeric from item WHERE id_produto = $1;", [id]);
-            const itensFormatados = itens.rows.map((item) => {
+            const resultQuery = yield (0, postgres_1.Query)(bdConn, "SELECT id, data_cadastro, preco::numeric from item WHERE id_produto = $1;", [id_produto]);
+            const itensFormatados = resultQuery.rows.map((item) => {
                 return {
                     id: item.id,
                     data_compra: item.data_compra,
                     preco: Number(item.preco)
                 };
             });
-            res.status(200).send(itensFormatados);
+            const retorno = {
+                errors: [],
+                msg: ["Itens listadas com sucesso"],
+                data: {
+                    rows: itensFormatados,
+                    fields: resultQuery.fields
+                }
+            };
+            res.status(200).send(retorno);
         }
         catch (err) {
-            res.status(500).send(err);
+            const retorno = {
+                errors: [err.message],
+                msg: ["Falha ao listar itens"],
+                data: null
+            };
+            res.status(500).send(retorno);
         }
         finally {
             if (bdConn)
@@ -48,24 +61,24 @@ router.delete("/:id", function (req, res) {
         let bdConn = null;
         try {
             bdConn = yield (0, postgres_1.StartConnection)();
-            const itemExistente = yield (0, postgres_1.Query)(bdConn, "SELECT * FROM item WHERE id = $1;", [id]);
-            if (itemExistente.rows.length === 0) {
-                return res.status(404).send({
-                    errors: ["Item não encontrado"],
-                    msg: "Nenhum item foi encontrado com o ID fornecido."
-                });
-            }
-            yield (0, postgres_1.Query)(bdConn, "DELETE FROM item WHERE id = $1;", [id]);
-            res.status(200).send({
+            const resultQuery = yield (0, postgres_1.Query)(bdConn, "DELETE FROM item WHERE id = $1;", [id]);
+            const retorno = {
                 errors: [],
-                msg: `Item com ID ${id} deletado com sucesso.`
-            });
+                msg: ["Item deletado com sucesso"],
+                data: {
+                    rows: resultQuery.rows,
+                    fields: resultQuery.fields
+                }
+            };
+            res.status(200).send(retorno);
         }
         catch (err) {
-            res.status(500).send({
+            const retorno = {
                 errors: [err.message],
-                msg: "Falha ao deletar o item."
-            });
+                msg: ["Falha ao deletar o item"],
+                data: null
+            };
+            res.status(500).send(retorno);
         }
         finally {
             if (bdConn)
@@ -73,4 +86,3 @@ router.delete("/:id", function (req, res) {
         }
     });
 });
-//# sourceMappingURL=Itens.js.map

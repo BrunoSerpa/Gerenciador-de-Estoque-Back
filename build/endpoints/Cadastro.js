@@ -26,16 +26,26 @@ router.post("", function (req, res) {
             const resultadoCadastro = yield (0, postgres_1.Query)(bdConn, `INSERT INTO cadastro (data_cadastro, frete, titulo, custo_itens) 
                 VALUES ($1, $2, $3, 0) RETURNING id;`, [data_cadastro, frete, titulo]);
             const id_cadastro = resultadoCadastro.rows[0].id;
-            for (const item of itens) {
-                yield (0, postgres_1.Query)(bdConn, `INSERT INTO item (id_cadastro, id_produto, data_compra, preco) 
-                    VALUES ($1, $2, $3, $4);`, [id_cadastro, item.id_produto, data_cadastro, item.preco]);
+            try {
+                for (const item of itens) {
+                    yield (0, postgres_1.Query)(bdConn, `INSERT INTO item (id_cadastro, id_produto, data_compra, preco) 
+                        VALUES ($1, $2, $3, $4);`, [id_cadastro, item.id_produto, data_cadastro, item.preco]);
+                }
+                const retorno = {
+                    errors: [],
+                    msg: ["Cadastro cadastrada com sucesso"],
+                    data: resultadoCadastro.rows[0],
+                };
+                res.status(200).send(retorno);
             }
-            const retorno = {
-                errors: [],
-                msg: ["Cadastro cadastrado com sucesso"],
-                data: resultadoCadastro.rows,
-            };
-            res.status(200).send(retorno);
+            catch (err) {
+                const retorno = {
+                    errors: [err.message],
+                    msg: ["Falha ao cadastrar itens"],
+                    data: null,
+                };
+                res.status(500).send(retorno);
+            }
         }
         catch (err) {
             const retorno = {
@@ -51,13 +61,13 @@ router.post("", function (req, res) {
         }
     });
 });
-router.get("", function (req, res) {
+router.get("", function (_req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         let bdConn = null;
         try {
             bdConn = yield (0, postgres_1.StartConnection)();
-            const cadastros = yield (0, postgres_1.Query)(bdConn, "SELECT id, data_cadastro, titulo, frete::numeric, custo_itens::numeric from cadastro;", []);
-            const cadastrosFormatados = cadastros.rows.map((cadastro) => {
+            const resultQuery = yield (0, postgres_1.Query)(bdConn, "SELECT id, data_cadastro, titulo, frete::numeric, custo_itens::numeric from cadastro;", []);
+            const cadastrosFormatadas = resultQuery.rows.map((cadastro) => {
                 return {
                     id: cadastro.id,
                     data_cadastro: cadastro.data_cadastro,
@@ -65,10 +75,23 @@ router.get("", function (req, res) {
                     total: cadastro.frete ? Number(cadastro.custo_itens) + Number(cadastro.frete) : Number(cadastro.custo_itens)
                 };
             });
-            res.status(200).send(cadastrosFormatados);
+            const retorno = {
+                errors: [],
+                msg: ["Cadastros listados com sucesso"],
+                data: {
+                    rows: cadastrosFormatadas,
+                    fields: resultQuery.fields
+                }
+            };
+            res.status(200).send(retorno);
         }
         catch (err) {
-            res.status(500).send(err);
+            const retorno = {
+                errors: [err.message],
+                msg: ["Falha ao listar cadastros"],
+                data: null
+            };
+            res.status(500).send(retorno);
         }
         finally {
             if (bdConn)
@@ -82,24 +105,24 @@ router.delete("/:id", function (req, res) {
         let bdConn = null;
         try {
             bdConn = yield (0, postgres_1.StartConnection)();
-            const cadastroExistente = yield (0, postgres_1.Query)(bdConn, "SELECT * FROM cadastro WHERE id = $1;", [id]);
-            if (cadastroExistente.rows.length === 0) {
-                return res.status(404).send({
-                    errors: ["Cadastro não encontrado"],
-                    msg: "Nenhum cadastro foi encontrado com o ID fornecido."
-                });
-            }
-            yield (0, postgres_1.Query)(bdConn, "DELETE FROM cadastro WHERE id = $1;", [id]);
-            res.status(200).send({
+            const resultQuery = yield (0, postgres_1.Query)(bdConn, "DELETE FROM cadastro WHERE id = $1;", [id]);
+            const retorno = {
                 errors: [],
-                msg: `Cadastro com ID ${id} deletado com sucesso.`
-            });
+                msg: ["Cadastro deletado com sucesso"],
+                data: {
+                    rows: resultQuery.rows,
+                    fields: resultQuery.fields
+                }
+            };
+            res.status(200).send(retorno);
         }
         catch (err) {
-            res.status(500).send({
+            const retorno = {
                 errors: [err.message],
-                msg: "Falha ao deletar o cadastro."
-            });
+                msg: ["Falha ao deletar o cadastro"],
+                data: null
+            };
+            res.status(500).send(retorno);
         }
         finally {
             if (bdConn)
@@ -107,4 +130,3 @@ router.delete("/:id", function (req, res) {
         }
     });
 });
-//# sourceMappingURL=Cadastro.js.map

@@ -12,20 +12,20 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.MarcaRouter = void 0;
+exports.NomesRouter = void 0;
 const express_1 = __importDefault(require("express"));
 const postgres_1 = require("../services/postgres");
 const router = express_1.default.Router();
-exports.MarcaRouter = router;
+exports.NomesRouter = router;
 router.get("", function (_req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         let bdConn = null;
         try {
             bdConn = yield (0, postgres_1.StartConnection)();
-            const resultQuery = yield (0, postgres_1.Query)(bdConn, "SELECT * from marca;", []);
+            const resultQuery = yield (0, postgres_1.Query)(bdConn, "SELECT * from nome;", []);
             const retorno = {
                 errors: [],
-                msg: ["Marcas listadas com sucesso"],
+                msg: ["Nomes listados com sucesso"],
                 data: {
                     rows: resultQuery.rows,
                     fields: resultQuery.fields
@@ -36,7 +36,7 @@ router.get("", function (_req, res) {
         catch (err) {
             const retorno = {
                 errors: [err.message],
-                msg: ["Falha ao listar marcas"],
+                msg: ["Falha ao listar nomes"],
                 data: null
             };
             res.status(500).send(retorno);

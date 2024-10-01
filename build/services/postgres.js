@@ -9,7 +9,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Query = exports.EndConnection = exports.StartConnection = void 0;
+exports.StartConnection = StartConnection;
+exports.EndConnection = EndConnection;
+exports.Query = Query;
 const pg_1 = require("pg");
 require('dotenv-ts').config();
 function StartConnection() {
@@ -26,11 +28,9 @@ function StartConnection() {
         ssl: true
     });
 }
-exports.StartConnection = StartConnection;
 function EndConnection(conn) {
     conn.end();
 }
-exports.EndConnection = EndConnection;
 function Query(conn, query, valores) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -42,5 +42,3 @@ function Query(conn, query, valores) {
         }
     });
 }
-exports.Query = Query;
-//# sourceMappingURL=postgres.js.map
