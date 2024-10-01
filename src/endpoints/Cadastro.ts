@@ -1,10 +1,13 @@
 import express, { Request, Response } from "express";
-import { StartConnection, EndConnection, Query } from "../services/postgres";
 import { Pool } from "pg";
+
+import { StartConnection, EndConnection, Query } from "../services/postgres";
+
+import { CadastrarCadastro, Cadastro, VisualizarCadastro } from "../types/Cadastro";
 import { RespostaPadrao } from "../types/Response";
-import { Cadastro, CadastroCadastrar, CadastroVisualizar } from "../types/Cadastro";
 
 const router = express.Router();
+
 router.post(
     "",
     async function (req: Request, res: Response) {
@@ -13,7 +16,7 @@ router.post(
             frete,
             titulo,
             itens
-        } = req.body as CadastroCadastrar;
+        } = req.body as CadastrarCadastro;
 
         let bdConn: Pool | null = null;
         try {
@@ -28,22 +31,30 @@ router.post(
 
             const id_cadastro = resultadoCadastro.rows[0].id;
 
-            for (const item of itens) {
-                await Query(
-                    bdConn,
-                    `INSERT INTO item (id_cadastro, id_produto, data_compra, preco) 
-                    VALUES ($1, $2, $3, $4);`,
-                    [id_cadastro, item.id_produto, data_cadastro, item.preco]
-                );
+            try {
+                for (const item of itens) {
+                    await Query(
+                        bdConn,
+                        `INSERT INTO item (id_cadastro, id_produto, data_compra, preco) 
+                        VALUES ($1, $2, $3, $4);`,
+                        [id_cadastro, item.id_produto, data_cadastro, item.preco]
+                    );
+                }
+
+                const retorno = {
+                    errors: [],
+                    msg: ["Cadastro cadastrada com sucesso"],
+                    data: resultadoCadastro.rows[0],
+                } as RespostaPadrao;
+                res.status(200).send(retorno);
+            } catch (err) {
+                const retorno = {
+                    errors: [(err as Error).message],
+                    msg: ["Falha ao cadastrar itens"],
+                    data: null,
+                } as RespostaPadrao;
+                res.status(500).send(retorno);
             }
-
-            const retorno = {
-                errors: [],
-                msg: ["Cadastro cadastrado com sucesso"],
-                data: resultadoCadastro.rows,
-            } as RespostaPadrao;
-
-            res.status(200).send(retorno);
         } catch (err) {
             const retorno = {
                 errors: [(err as Error).message],
@@ -60,17 +71,18 @@ router.post(
 
 router.get(
     "",
-    async function (req: Request, res: Response) {
+    async function (_req: Request, res: Response) {
         let bdConn: Pool | null = null;
         try {
             bdConn = await StartConnection();
-            const cadastros = await Query<Cadastro>(
+
+            const resultQuery = await Query<Cadastro>(
                 bdConn,
                 "SELECT id, data_cadastro, titulo, frete::numeric, custo_itens::numeric from cadastro;",
                 []
             );
 
-            const cadastrosFormatados: CadastroVisualizar[] = cadastros.rows.map((cadastro: Cadastro) => {
+            const cadastrosFormatadas: VisualizarCadastro[] = resultQuery.rows.map((cadastro: Cadastro) => {
                 return {
                     id: cadastro.id,
                     data_cadastro: cadastro.data_cadastro,
@@ -79,9 +91,22 @@ router.get(
                 };
             });
 
-            res.status(200).send(cadastrosFormatados);
+            const retorno = {
+                errors: [],
+                msg: ["Cadastros listados com sucesso"],
+                data: {
+                    rows: cadastrosFormatadas,
+                    fields: resultQuery.fields
+                }
+            } as RespostaPadrao;
+            res.status(200).send(retorno);
         } catch (err) {
-            res.status(500).send(err);
+            const retorno = {
+                errors: [(err as Error).message],
+                msg: ["Falha ao listar cadastros"],
+                data: null
+            } as RespostaPadrao;
+            res.status(500).send(retorno);
         } finally {
             if (bdConn) EndConnection(bdConn);
         }
@@ -93,38 +118,33 @@ router.delete(
     "/:id",
     async function (req: Request, res: Response) {
         const { id } = req.params;
+
         let bdConn: Pool | null = null;
         try {
             bdConn = await StartConnection();
 
-            const cadastroExistente = await Query(
-                bdConn,
-                "SELECT * FROM cadastro WHERE id = $1;",
-                [id]
-            );
-
-            if (cadastroExistente.rows.length === 0) {
-                return res.status(404).send({
-                    errors: ["Cadastro não encontrado"],
-                    msg: "Nenhum cadastro foi encontrado com o ID fornecido."
-                });
-            }
-
-            await Query(
+            const resultQuery = await Query(
                 bdConn,
                 "DELETE FROM cadastro WHERE id = $1;",
                 [id]
             );
 
-            res.status(200).send({
+            const retorno = {
                 errors: [],
-                msg: `Cadastro com ID ${id} deletado com sucesso.`
-            });
+                msg: ["Cadastro deletado com sucesso"],
+                data: {
+                    rows: resultQuery.rows,
+                    fields: resultQuery.fields
+                }
+            };
+            res.status(200).send(retorno);
         } catch (err) {
-            res.status(500).send({
+            const retorno = {
                 errors: [(err as Error).message],
-                msg: "Falha ao deletar o cadastro."
-            });
+                msg: ["Falha ao deletar o cadastro"],
+                data: null
+            };
+            res.status(500).send(retorno);
         } finally {
             if (bdConn) EndConnection(bdConn);
         }
