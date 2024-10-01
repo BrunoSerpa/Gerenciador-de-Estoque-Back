@@ -2,9 +2,11 @@ import express from "express";
 import cors from "cors";
 import os from "os";
 
-import { ProdutoRouter } from "./endpoints/Produtos";
 import { CadastroRouter } from "./endpoints/Cadastro";
 import { ItemRouter } from "./endpoints/Itens";
+import { MarcaRouter } from "./endpoints/Marca";
+import { NomesRouter } from "./endpoints/Nomes";
+import { ProdutoRouter } from "./endpoints/Produtos";
 
 require("dotenv-ts").config();
 
@@ -36,8 +38,10 @@ app.listen(
   }
 );
 
-app.use("/produto", ProdutoRouter);
 app.use("/cadastro", CadastroRouter);
 app.use("/item", ItemRouter);
+app.use("/marcas", MarcaRouter);
+app.use("/nomes", NomesRouter);
+app.use("/produto", ProdutoRouter);
 
-module.exports = app;
+module.exports = app; 
