@@ -10,7 +10,7 @@ interface Produto {
     quantidade: number;
 };
 
-interface ProdutoCadastrar {
+interface CadastrarProduto {
     nomes: string[];
     marca?: number | string;
     garantia: number;
@@ -18,7 +18,7 @@ interface ProdutoCadastrar {
     validade?: number;
 };
 
-interface ProdutoVisualisar {
+interface VisualizarProduto {
     id: number;
     nomes: NomeVisualizar[];
     garantia: number;
@@ -28,4 +28,4 @@ interface ProdutoVisualisar {
     marca?: Marca;
 };
 
-export { Produto, ProdutoCadastrar, ProdutoVisualisar };
+export { Produto, CadastrarProduto, VisualizarProduto };

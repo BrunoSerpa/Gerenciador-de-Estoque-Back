@@ -1,4 +1,4 @@
-import { ItemCadastrar } from "./Item";
+import { CadastrarItem } from "./Item";
 
 interface Cadastro {
     id: number;
@@ -8,14 +8,14 @@ interface Cadastro {
     custo_itens: number;
 };
 
-interface CadastroCadastrar {
+interface CadastrarCadastro {
     data_cadastro: Date;
     frete: number;
     titulo: string;
-    itens: ItemCadastrar[];
+    itens: CadastrarItem[];
 };
 
-interface CadastroVisualizar {
+interface VisualizarCadastro {
     id: number;
     data_cadastro: Date;
     titulo: string;
@@ -23,4 +23,4 @@ interface CadastroVisualizar {
     total: number;
 };
 
-export { Cadastro, CadastroCadastrar, CadastroVisualizar }
+export { Cadastro, CadastrarCadastro, VisualizarCadastro }

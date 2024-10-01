@@ -6,15 +6,15 @@ interface Item {
     preco: number;
 };
 
-interface ItemCadastrar {
+interface CadastrarItem {
     id_produto: number;
     preco: number;
 };
 
-interface ItemVisualizar {
+interface VisualizarItem {
     id: number;
     data_compra: Date;
     preco: number;
 };
 
-export { Item, ItemCadastrar, ItemVisualizar };
+export { Item, CadastrarItem, VisualizarItem };
