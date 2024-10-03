@@ -119,7 +119,7 @@ router.get("", function (_req, res) {
                     fields: resultQuery.fields
                 }
             };
-            res.status(200).send(produtosFormatados);
+            res.status(200).send(retorno);
         }
         catch (err) {
             const retorno = {

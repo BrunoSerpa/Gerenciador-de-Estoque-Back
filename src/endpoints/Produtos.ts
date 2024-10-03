@@ -147,7 +147,7 @@ router.get(
                     fields: resultQuery.fields
                 }
             } as RespostaPadrao;
-            res.status(200).send(produtosFormatados);
+            res.status(200).send(retorno);
         } catch (err) {
             const retorno = {
                 errors: [(err as Error).message],
