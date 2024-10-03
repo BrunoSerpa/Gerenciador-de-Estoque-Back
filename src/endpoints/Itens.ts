@@ -19,7 +19,7 @@ router.get(
 
             const resultQuery = await Query<Item>(
                 bdConn,
-                "SELECT id, data_cadastro, preco::numeric from item WHERE id_produto = $1;",
+                "SELECT id, data_compra, preco::numeric from item WHERE id_produto = $1;",
                 [id_produto]
             );
 

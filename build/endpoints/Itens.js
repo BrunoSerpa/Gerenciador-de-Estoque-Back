@@ -23,7 +23,7 @@ router.get("/:id_produto", function (req, res) {
         let bdConn = null;
         try {
             bdConn = yield (0, postgres_1.StartConnection)();
-            const resultQuery = yield (0, postgres_1.Query)(bdConn, "SELECT id, data_cadastro, preco::numeric from item WHERE id_produto = $1;", [id_produto]);
+            const resultQuery = yield (0, postgres_1.Query)(bdConn, "SELECT id, data_compra, preco::numeric from item WHERE id_produto = $1;", [id_produto]);
             const itensFormatados = resultQuery.rows.map((item) => {
                 return {
                     id: item.id,
