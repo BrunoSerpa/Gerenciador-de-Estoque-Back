@@ -22,4 +22,10 @@ interface VisualizarItem {
     preco: number;
 };
 
-export { AtualizarItem, CadastrarItem, Item, VisualizarItem };
+interface VisualizarItem2 {
+    id_produto: number;
+    preco: number;
+    quantidade: number
+};
+
+export { AtualizarItem, CadastrarItem, Item, VisualizarItem, VisualizarItem2 };
