@@ -3,8 +3,9 @@ import { Pool } from "pg";
 
 import { StartConnection, EndConnection, Query } from "../services/postgres";
 
-import { CadastrarCadastro, Cadastro, VisualizarCadastro } from "../types/Cadastro";
+import { AtualizarCadastro, CadastrarCadastro, Cadastro, VisualizarCadastro } from "../types/Cadastro";
 import { RespostaPadrao } from "../types/Response";
+import { AtualizarItem } from "../types/Item";
 
 const router = express.Router();
 
@@ -113,6 +114,94 @@ router.get(
 
     }
 );
+
+router.patch(
+    "/:id",
+    async function (req: Request, res: Response) {
+        const {
+            data_cadastro,
+            frete,
+            itens,
+            titulo
+        } = req.body as AtualizarCadastro;
+
+        const { id } = req.params;
+
+        let bdConn: Pool | null = null;
+        try {
+            bdConn = await StartConnection();
+
+            let valoresQuery: Array<string> = [];
+            if (data_cadastro !== undefined) valoresQuery.push(`data_cadastro = '${data_cadastro}'`);
+            if (frete !== undefined) valoresQuery.push(`frete = '${frete}'`);
+            if (itens !== undefined) valoresQuery.push(`itens = '${itens}'`);
+            if (titulo !== undefined) valoresQuery.push(`nome = '${titulo}'`);
+
+            await Query<AtualizarCadastro>(
+                bdConn,
+                `UPDATE alerta SET ${valoresQuery.join(", ")} WHERE id = ${id};`,
+                []
+            );
+
+            const resultItens = await Query(
+                bdConn,
+                "SELECT id, id_produto, data_compra, preco FROM item WHERE id_cadastro = $1;",
+                [id]
+            );
+            const itensAtuais = resultItens.rows;
+
+            for (const item of itens) {
+                const itemExistente = itensAtuais.find(
+                    (it: AtualizarItem) => it.id_produto === item.id_produto
+                );
+
+                if (itemExistente) {
+                    await Query(
+                        bdConn,
+                        `UPDATE item SET data_compra = $1, preco = $2 WHERE id = $3;`,
+                        [data_cadastro, item.preco, itemExistente.id]
+                    );
+                } else {
+                    await Query(
+                        bdConn,
+                        `INSERT INTO item (id_cadastro, id_produto, data_compra, preco) 
+                        VALUES ($1, $2, $3, $4);`,
+                        [id, item.id_produto, data_cadastro, item.preco]
+                    );
+                }
+            }
+
+            const idsProdutosRecebidos = itens.map((it) => it.id_produto);
+            const itensParaRemover = itensAtuais.filter(
+                (it: AtualizarItem) => !idsProdutosRecebidos.includes(it.id_produto)
+            );
+
+            for (const itemParaRemover of itensParaRemover) {
+                await Query(
+                    bdConn,
+                    `DELETE FROM item WHERE id = $1;`,
+                    [itemParaRemover.id]
+                );
+            }
+
+            const retorno = {
+                errors: [],
+                msg: ["Cadastro atualizado com sucesso"],
+                data: null
+            } as RespostaPadrao;
+            res.status(200).send(retorno);
+        } catch (err) {
+            const retorno = {
+                errors: [(err as Error).message],
+                msg: ["Falha ao atualizar cadastro"],
+                data: null
+            } as RespostaPadrao;
+            res.status(500).send(retorno);
+        }
+        if (bdConn) EndConnection(bdConn);
+    }
+
+)
 
 router.delete(
     "/:id",

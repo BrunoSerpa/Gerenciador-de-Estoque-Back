@@ -99,6 +99,59 @@ router.get("", function (_req, res) {
         }
     });
 });
+router.patch("/:id", function (req, res) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const { data_cadastro, frete, itens, titulo } = req.body;
+        const { id } = req.params;
+        let bdConn = null;
+        try {
+            bdConn = yield (0, postgres_1.StartConnection)();
+            let valoresQuery = [];
+            if (data_cadastro !== undefined)
+                valoresQuery.push(`data_cadastro = '${data_cadastro}'`);
+            if (frete !== undefined)
+                valoresQuery.push(`frete = '${frete}'`);
+            if (itens !== undefined)
+                valoresQuery.push(`itens = '${itens}'`);
+            if (titulo !== undefined)
+                valoresQuery.push(`nome = '${titulo}'`);
+            yield (0, postgres_1.Query)(bdConn, `UPDATE alerta SET ${valoresQuery.join(", ")} WHERE id = ${id};`, []);
+            const resultItens = yield (0, postgres_1.Query)(bdConn, "SELECT id, id_produto, data_compra, preco FROM item WHERE id_cadastro = $1;", [id]);
+            const itensAtuais = resultItens.rows;
+            for (const item of itens) {
+                const itemExistente = itensAtuais.find((it) => it.id_produto === item.id_produto);
+                if (itemExistente) {
+                    yield (0, postgres_1.Query)(bdConn, `UPDATE item SET data_compra = $1, preco = $2 WHERE id = $3;`, [data_cadastro, item.preco, itemExistente.id]);
+                }
+                else {
+                    yield (0, postgres_1.Query)(bdConn, `INSERT INTO item (id_cadastro, id_produto, data_compra, preco) 
+                        VALUES ($1, $2, $3, $4);`, [id, item.id_produto, data_cadastro, item.preco]);
+                }
+            }
+            const idsProdutosRecebidos = itens.map((it) => it.id_produto);
+            const itensParaRemover = itensAtuais.filter((it) => !idsProdutosRecebidos.includes(it.id_produto));
+            for (const itemParaRemover of itensParaRemover) {
+                yield (0, postgres_1.Query)(bdConn, `DELETE FROM item WHERE id = $1;`, [itemParaRemover.id]);
+            }
+            const retorno = {
+                errors: [],
+                msg: ["Cadastro atualizado com sucesso"],
+                data: null
+            };
+            res.status(200).send(retorno);
+        }
+        catch (err) {
+            const retorno = {
+                errors: [err.message],
+                msg: ["Falha ao atualizar cadastro"],
+                data: null
+            };
+            res.status(500).send(retorno);
+        }
+        if (bdConn)
+            (0, postgres_1.EndConnection)(bdConn);
+    });
+});
 router.delete("/:id", function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         const { id } = req.params;
