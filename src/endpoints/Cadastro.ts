@@ -3,9 +3,9 @@ import { Pool } from "pg";
 
 import { StartConnection, EndConnection, Query } from "../services/postgres";
 
-import { AtualizarCadastro, CadastrarCadastro, Cadastro, VisualizarCadastro } from "../types/Cadastro";
+import { AtualizarCadastro, CadastrarCadastro, Cadastro, VisualizarCadastro, VisualizarCadastro2 } from "../types/Cadastro";
 import { RespostaPadrao } from "../types/Response";
-import { AtualizarItem } from "../types/Item";
+import { AtualizarItem, VisualizarItem2 } from "../types/Item";
 
 const router = express.Router();
 
@@ -97,6 +97,59 @@ router.get(
                 msg: ["Cadastros listados com sucesso"],
                 data: {
                     rows: cadastrosFormatadas,
+                    fields: resultQuery.fields
+                }
+            } as RespostaPadrao;
+            res.status(200).send(retorno);
+        } catch (err) {
+            const retorno = {
+                errors: [(err as Error).message],
+                msg: ["Falha ao listar cadastros"],
+                data: null
+            } as RespostaPadrao;
+            res.status(500).send(retorno);
+        } finally {
+            if (bdConn) EndConnection(bdConn);
+        }
+
+    }
+);
+
+router.get(
+    "/:id",
+    async function (req: Request, res: Response) {
+        const { id } = req.params;
+
+        let bdConn: Pool | null = null;
+        try {
+            bdConn = await StartConnection();
+
+            const resultQuery = await Query<Cadastro>(
+                bdConn,
+                "SELECT id, data_cadastro, titulo, frete::numeric from cadastro WHERE id_cadastro = $1;",
+                [id]
+            );
+
+            const resultQueryItens = await Query<VisualizarItem2>(
+                bdConn,
+                "SELECT id_produto, preco::numeric, COUNT(*) as quantidade FROM item WHERE id_cadastro = $1 GROUP BY id_produto, preco;",
+                [id]
+            );
+
+            const cadastroFormatado: VisualizarCadastro2[] = resultQuery.rows.map((cadastro: Cadastro) => {
+                return {
+                    id: cadastro.id,
+                    data_cadastro: cadastro.data_cadastro,
+                    titulo: cadastro.titulo || undefined,
+                    itens: resultQueryItens.rows
+                };
+            });
+
+            const retorno = {
+                errors: [],
+                msg: ["Cadastros listados com sucesso"],
+                data: {
+                    rows: cadastroFormatado,
                     fields: resultQuery.fields
                 }
             } as RespostaPadrao;

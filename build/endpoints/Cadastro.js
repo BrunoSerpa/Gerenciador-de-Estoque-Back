@@ -99,6 +99,46 @@ router.get("", function (_req, res) {
         }
     });
 });
+router.get("/:id", function (req, res) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const { id } = req.params;
+        let bdConn = null;
+        try {
+            bdConn = yield (0, postgres_1.StartConnection)();
+            const resultQuery = yield (0, postgres_1.Query)(bdConn, "SELECT id, data_cadastro, titulo, frete::numeric from cadastro WHERE id_cadastro = $1;", [id]);
+            const resultQueryItens = yield (0, postgres_1.Query)(bdConn, "SELECT id_produto, preco::numeric, COUNT(*) as quantidade FROM item WHERE id_cadastro = $1 GROUP BY id_produto, preco;", [id]);
+            const cadastroFormatado = resultQuery.rows.map((cadastro) => {
+                return {
+                    id: cadastro.id,
+                    data_cadastro: cadastro.data_cadastro,
+                    titulo: cadastro.titulo || undefined,
+                    itens: resultQueryItens.rows
+                };
+            });
+            const retorno = {
+                errors: [],
+                msg: ["Cadastros listados com sucesso"],
+                data: {
+                    rows: cadastroFormatado,
+                    fields: resultQuery.fields
+                }
+            };
+            res.status(200).send(retorno);
+        }
+        catch (err) {
+            const retorno = {
+                errors: [err.message],
+                msg: ["Falha ao listar cadastros"],
+                data: null
+            };
+            res.status(500).send(retorno);
+        }
+        finally {
+            if (bdConn)
+                (0, postgres_1.EndConnection)(bdConn);
+        }
+    });
+});
 router.patch("/:id", function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         const { data_cadastro, frete, itens, titulo } = req.body;
