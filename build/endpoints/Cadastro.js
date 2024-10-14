@@ -105,7 +105,7 @@ router.get("/:id", function (req, res) {
         let bdConn = null;
         try {
             bdConn = yield (0, postgres_1.StartConnection)();
-            const resultQuery = yield (0, postgres_1.Query)(bdConn, "SELECT id, data_cadastro, titulo, frete::numeric from cadastro WHERE id_cadastro = $1;", [id]);
+            const resultQuery = yield (0, postgres_1.Query)(bdConn, "SELECT id, data_cadastro, titulo, frete::numeric from cadastro WHERE id = $1;", [id]);
             const resultQueryItens = yield (0, postgres_1.Query)(bdConn, "SELECT id_produto, preco::numeric, COUNT(*) as quantidade FROM item WHERE id_cadastro = $1 GROUP BY id_produto, preco;", [id]);
             const cadastroFormatado = resultQuery.rows.map((cadastro) => {
                 return {

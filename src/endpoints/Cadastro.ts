@@ -126,7 +126,7 @@ router.get(
 
             const resultQuery = await Query<Cadastro>(
                 bdConn,
-                "SELECT id, data_cadastro, titulo, frete::numeric from cadastro WHERE id_cadastro = $1;",
+                "SELECT id, data_cadastro, titulo, frete::numeric from cadastro WHERE id = $1;",
                 [id]
             );
 
