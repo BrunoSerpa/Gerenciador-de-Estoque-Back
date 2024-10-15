@@ -4,8 +4,8 @@ import { Pool } from "pg";
 import { StartConnection, EndConnection, Query } from "../services/postgres";
 
 import { Marca } from "../types/Marca";
-import { Nome, NomeVisualizar } from "../types/Nome";
-import { Produto, CadastrarProduto, VisualizarProduto } from "../types/Produto";
+import { Nome, NomeAtualizar, NomeVisualizar } from "../types/Nome";
+import { Produto, CadastrarProduto, VisualizarProduto, AtualizarProduto } from "../types/Produto";
 import { RespostaPadrao } from "../types/Response";
 
 const router = express.Router();
@@ -153,6 +153,117 @@ router.get(
                 errors: [(err as Error).message],
                 msg: ["Falha ao listar produtos"],
                 data: null
+            } as RespostaPadrao;
+            res.status(500).send(retorno);
+        } finally {
+            if (bdConn) EndConnection(bdConn);
+        };
+    }
+);
+
+router.patch(
+    "/:id",
+    async function (req: Request, res: Response) {
+        const { id } = req.params;
+        const {
+            nomes,
+            marca,
+            garantia,
+            validade,
+            preco
+        } = req.body as AtualizarProduto;
+
+        let bdConn: Pool | null = null;
+        try {
+            let id_marca: number | null = null;
+
+            bdConn = await StartConnection();
+            if (typeof marca === "string") {
+                try {
+                    const resultadoMarca = await Query(
+                        bdConn,
+                        "INSERT INTO marca (nome) VALUES ($1) RETURNING id;",
+                        [marca]
+                    );
+                    id_marca = resultadoMarca.rows[0].id;
+                } catch (err) {
+                    const retorno = {
+                        errors: [(err as Error).message],
+                        msg: ["Falha ao cadastrar marca"],
+                        data: null,
+                    } as RespostaPadrao;
+                    res.status(500).send(retorno);
+                }
+            } else if (typeof marca === "number") {
+                id_marca = marca;
+            };
+
+            let valoresQuery: Array<string> = [];
+            valoresQuery.push(`id_marca = '${id_marca}'`);
+            if (garantia !== undefined) valoresQuery.push(`garantia = '${garantia}'`);
+            if (validade !== undefined) valoresQuery.push(`validade = '${validade}'`);
+            if (preco !== undefined) valoresQuery.push(`preco = '${preco}'`);
+
+            await Query<AtualizarProduto>(
+                bdConn,
+                `UPDATE produto SET ${valoresQuery.join(", ")} WHERE id = $1;`,
+                [id]
+            );
+
+            const resultNomes = await Query(
+                bdConn,
+                "SELECT id, nome FROM nome WHERE id_produto = $1;",
+                [id]
+            );
+
+            const nomesAtuais = resultNomes.rows;
+            let nomesParaRemover = [...nomesAtuais];
+
+            for (const nome of nomes) {
+                const nomeExistente = nomesAtuais.find(
+                    (no: NomeAtualizar) => no.nome === nome
+                );
+
+                if (nomeExistente) {
+                    nomesParaRemover = nomesParaRemover.filter(it => it.id !== nomeExistente.id);
+                } else {
+                    try {
+                        await Query(
+                            bdConn,
+                            "INSERT INTO nome (id_produto, nome) VALUES ($1, $2);",
+                            [id, nome]
+                        );
+                    } catch (err) {
+                        const retorno = {
+                            errors: [(err as Error).message],
+                            msg: ["Falha ao cadastrar nome"],
+                            data: null,
+                        } as RespostaPadrao;
+                        return res.status(500).send(retorno);
+                    }
+
+                }
+
+                for (const nomeParaRemover of nomesParaRemover) {
+                    await Query(
+                        bdConn,
+                        `DELETE FROM nome WHERE id = $1;`,
+                        [nomeParaRemover.id]
+                    );
+                };
+            };
+
+            const retorno = {
+                errors: [],
+                msg: ["Produto atualizado com sucesso"],
+                data: null,
+            } as RespostaPadrao;
+            res.status(200).send(retorno);
+        } catch (err) {
+            const retorno = {
+                errors: [(err as Error).message],
+                msg: ["Falha ao cadastrar produto"],
+                data: null,
             } as RespostaPadrao;
             res.status(500).send(retorno);
         } finally {

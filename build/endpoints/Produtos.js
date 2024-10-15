@@ -136,6 +136,90 @@ router.get("", function (_req, res) {
         ;
     });
 });
+router.patch("/:id", function (req, res) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const { id } = req.params;
+        const { nomes, marca, garantia, validade, preco } = req.body;
+        let bdConn = null;
+        try {
+            let id_marca = null;
+            bdConn = yield (0, postgres_1.StartConnection)();
+            if (typeof marca === "string") {
+                try {
+                    const resultadoMarca = yield (0, postgres_1.Query)(bdConn, "INSERT INTO marca (nome) VALUES ($1) RETURNING id;", [marca]);
+                    id_marca = resultadoMarca.rows[0].id;
+                }
+                catch (err) {
+                    const retorno = {
+                        errors: [err.message],
+                        msg: ["Falha ao cadastrar marca"],
+                        data: null,
+                    };
+                    res.status(500).send(retorno);
+                }
+            }
+            else if (typeof marca === "number") {
+                id_marca = marca;
+            }
+            ;
+            let valoresQuery = [];
+            valoresQuery.push(`id_marca = '${id_marca}'`);
+            if (garantia !== undefined)
+                valoresQuery.push(`garantia = '${garantia}'`);
+            if (validade !== undefined)
+                valoresQuery.push(`validade = '${validade}'`);
+            if (preco !== undefined)
+                valoresQuery.push(`preco = '${preco}'`);
+            yield (0, postgres_1.Query)(bdConn, `UPDATE produto SET ${valoresQuery.join(", ")} WHERE id = $1;`, [id]);
+            const resultNomes = yield (0, postgres_1.Query)(bdConn, "SELECT id, nome FROM nome WHERE id_produto = $1;", [id]);
+            const nomesAtuais = resultNomes.rows;
+            let nomesParaRemover = [...nomesAtuais];
+            for (const nome of nomes) {
+                const nomeExistente = nomesAtuais.find((no) => no.nome === nome);
+                if (nomeExistente) {
+                    nomesParaRemover = nomesParaRemover.filter(it => it.id !== nomeExistente.id);
+                }
+                else {
+                    try {
+                        yield (0, postgres_1.Query)(bdConn, "INSERT INTO nome (id_produto, nome) VALUES ($1, $2);", [id, nome]);
+                    }
+                    catch (err) {
+                        const retorno = {
+                            errors: [err.message],
+                            msg: ["Falha ao cadastrar nome"],
+                            data: null,
+                        };
+                        return res.status(500).send(retorno);
+                    }
+                }
+                for (const nomeParaRemover of nomesParaRemover) {
+                    yield (0, postgres_1.Query)(bdConn, `DELETE FROM nome WHERE id = $1;`, [nomeParaRemover.id]);
+                }
+                ;
+            }
+            ;
+            const retorno = {
+                errors: [],
+                msg: ["Produto atualizado com sucesso"],
+                data: null,
+            };
+            res.status(200).send(retorno);
+        }
+        catch (err) {
+            const retorno = {
+                errors: [err.message],
+                msg: ["Falha ao cadastrar produto"],
+                data: null,
+            };
+            res.status(500).send(retorno);
+        }
+        finally {
+            if (bdConn)
+                (0, postgres_1.EndConnection)(bdConn);
+        }
+        ;
+    });
+});
 router.delete("/:id", function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         const { id } = req.params;
