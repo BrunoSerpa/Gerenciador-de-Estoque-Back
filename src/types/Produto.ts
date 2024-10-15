@@ -10,6 +10,14 @@ interface Produto {
     quantidade: number;
 };
 
+interface AtualizarProduto {
+    nomes: string[];
+    marca?: number | string;
+    garantia: number;
+    preco: number;
+    validade?: number;
+};
+
 interface CadastrarProduto {
     nomes: string[];
     marca?: number | string;
@@ -28,4 +36,4 @@ interface VisualizarProduto {
     marca?: Marca;
 };
 
-export { Produto, CadastrarProduto, VisualizarProduto };
+export { Produto, AtualizarProduto, CadastrarProduto, VisualizarProduto };
