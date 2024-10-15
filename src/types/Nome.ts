@@ -4,9 +4,14 @@ interface Nome {
     nome: string;
 };
 
+interface NomeAtualizar {
+    id: number;
+    nome: string;
+};
+
 interface NomeVisualizar {
     id: number;
     nome: string;
 };
 
-export { Nome, NomeVisualizar };
+export { Nome, NomeAtualizar, NomeVisualizar };
