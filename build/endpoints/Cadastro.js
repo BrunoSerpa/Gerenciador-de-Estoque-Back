@@ -154,23 +154,28 @@ router.patch("/:id", function (req, res) {
             if (titulo !== undefined)
                 valoresQuery.push(`titulo = '${titulo}'`);
             yield (0, postgres_1.Query)(bdConn, `UPDATE cadastro SET ${valoresQuery.join(", ")} WHERE id = ${id};`, []);
-            const resultItens = yield (0, postgres_1.Query)(bdConn, "SELECT id, id_produto, data_compra, preco FROM item WHERE id_cadastro = $1;", [id]);
+            const resultItens = yield (0, postgres_1.Query)(bdConn, "SELECT id, id_produto, preco FROM item WHERE id_cadastro = $1;", [id]);
             const itensAtuais = resultItens.rows;
+            let itensParaRemover = [...itensAtuais];
             for (const item of itens) {
-                const itemExistente = itensAtuais.find((it) => it.id_produto === item.id_produto);
+                const itemExistente = itensAtuais.find((it) => {
+                    return it.id_produto === item.id_produto && it.preco === item.preco;
+                });
                 if (itemExistente) {
-                    yield (0, postgres_1.Query)(bdConn, `UPDATE item SET data_compra = $1, preco = $2 WHERE id = $3;`, [data_cadastro, item.preco, itemExistente.id]);
+                    yield (0, postgres_1.Query)(bdConn, `UPDATE item SET data_compra = $1 WHERE id = $3;`, [data_cadastro, itemExistente.id]);
+                    itensParaRemover = itensParaRemover.filter(it => it.id !== itemExistente.id);
                 }
                 else {
                     yield (0, postgres_1.Query)(bdConn, `INSERT INTO item (id_cadastro, id_produto, data_compra, preco) 
                         VALUES ($1, $2, $3, $4);`, [id, item.id_produto, data_cadastro, item.preco]);
                 }
+                ;
             }
-            const idsProdutosRecebidos = itens.map((it) => it.id_produto);
-            const itensParaRemover = itensAtuais.filter((it) => !idsProdutosRecebidos.includes(it.id_produto));
+            ;
             for (const itemParaRemover of itensParaRemover) {
                 yield (0, postgres_1.Query)(bdConn, `DELETE FROM item WHERE id = $1;`, [itemParaRemover.id]);
             }
+            ;
             const retorno = {
                 errors: [],
                 msg: ["Cadastro atualizado com sucesso"],

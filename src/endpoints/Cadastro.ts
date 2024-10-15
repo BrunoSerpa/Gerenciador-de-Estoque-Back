@@ -197,7 +197,7 @@ router.patch(
 
             const resultItens = await Query(
                 bdConn,
-                "SELECT id, id_produto, data_compra, preco FROM item WHERE id_cadastro = $1;",
+                "SELECT id, id_produto, preco FROM item WHERE id_cadastro = $1;",
                 [id]
             );
             const itensAtuais = resultItens.rows;
@@ -210,8 +210,8 @@ router.patch(
                 if (itemExistente) {
                     await Query(
                         bdConn,
-                        `UPDATE item SET data_compra = $1, preco = $2 WHERE id = $3;`,
-                        [data_cadastro, item.preco, itemExistente.id]
+                        `UPDATE item SET data_compra = $1 WHERE id = $3;`,
+                        [data_cadastro, itemExistente.id]
                     );
 
                     itensParaRemover = itensParaRemover.filter(it => it.id !== itemExistente.id);
@@ -222,8 +222,8 @@ router.patch(
                         VALUES ($1, $2, $3, $4);`,
                         [id, item.id_produto, data_cadastro, item.preco]
                     );
-                }
-            }
+                };
+            };
 
             for (const itemParaRemover of itensParaRemover) {
                 await Query(
@@ -231,7 +231,7 @@ router.patch(
                     `DELETE FROM item WHERE id = $1;`,
                     [itemParaRemover.id]
                 );
-            }
+            };
 
             const retorno = {
                 errors: [],
