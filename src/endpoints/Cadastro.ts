@@ -201,11 +201,11 @@ router.patch(
                 [id]
             );
             const itensAtuais = resultItens.rows;
-
+            let itensParaRemover = [...itensAtuais];
             for (const item of itens) {
-                const itemExistente = itensAtuais.find(
-                    (it: AtualizarItem) => it.id_produto === item.id_produto
-                );
+                const itemExistente = itensAtuais.find((it: AtualizarItem) => {
+                    return it.id_produto === item.id_produto && it.preco === item.preco;
+                });
 
                 if (itemExistente) {
                     await Query(
@@ -213,6 +213,8 @@ router.patch(
                         `UPDATE item SET data_compra = $1, preco = $2 WHERE id = $3;`,
                         [data_cadastro, item.preco, itemExistente.id]
                     );
+
+                    itensParaRemover = itensParaRemover.filter(it => it.id !== itemExistente.id);
                 } else {
                     await Query(
                         bdConn,
@@ -222,11 +224,6 @@ router.patch(
                     );
                 }
             }
-
-            const idsProdutosRecebidos = itens.map((it) => it.id_produto);
-            const itensParaRemover = itensAtuais.filter(
-                (it: AtualizarItem) => !idsProdutosRecebidos.includes(it.id_produto)
-            );
 
             for (const itemParaRemover of itensParaRemover) {
                 await Query(
@@ -252,7 +249,6 @@ router.patch(
         }
         if (bdConn) EndConnection(bdConn);
     }
-
 )
 
 router.delete(
