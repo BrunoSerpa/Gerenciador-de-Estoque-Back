@@ -151,11 +151,9 @@ router.patch("/:id", function (req, res) {
                 valoresQuery.push(`data_cadastro = '${data_cadastro}'`);
             if (frete !== undefined)
                 valoresQuery.push(`frete = '${frete}'`);
-            if (itens !== undefined)
-                valoresQuery.push(`itens = '${itens}'`);
             if (titulo !== undefined)
-                valoresQuery.push(`nome = '${titulo}'`);
-            yield (0, postgres_1.Query)(bdConn, `UPDATE alerta SET ${valoresQuery.join(", ")} WHERE id = ${id};`, []);
+                valoresQuery.push(`titulo = '${titulo}'`);
+            yield (0, postgres_1.Query)(bdConn, `UPDATE cadastro SET ${valoresQuery.join(", ")} WHERE id = ${id};`, []);
             const resultItens = yield (0, postgres_1.Query)(bdConn, "SELECT id, id_produto, data_compra, preco FROM item WHERE id_cadastro = $1;", [id]);
             const itensAtuais = resultItens.rows;
             for (const item of itens) {

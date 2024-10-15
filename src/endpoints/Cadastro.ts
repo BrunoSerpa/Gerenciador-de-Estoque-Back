@@ -187,12 +187,11 @@ router.patch(
             let valoresQuery: Array<string> = [];
             if (data_cadastro !== undefined) valoresQuery.push(`data_cadastro = '${data_cadastro}'`);
             if (frete !== undefined) valoresQuery.push(`frete = '${frete}'`);
-            if (itens !== undefined) valoresQuery.push(`itens = '${itens}'`);
-            if (titulo !== undefined) valoresQuery.push(`nome = '${titulo}'`);
+            if (titulo !== undefined) valoresQuery.push(`titulo = '${titulo}'`);
 
             await Query<AtualizarCadastro>(
                 bdConn,
-                `UPDATE alerta SET ${valoresQuery.join(", ")} WHERE id = ${id};`,
+                `UPDATE cadastro SET ${valoresQuery.join(", ")} WHERE id = ${id};`,
                 []
             );
 
