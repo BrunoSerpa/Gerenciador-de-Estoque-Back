@@ -36,4 +36,12 @@ interface VisualizarProduto {
     marca?: Marca;
 };
 
-export { Produto, AtualizarProduto, CadastrarProduto, VisualizarProduto };
+interface VisualizarProduto2 {
+    nomes: string[];
+    garantia: number;
+    validade?: number;
+    preco: number;
+    marca?: number;
+};
+
+export { Produto, AtualizarProduto, CadastrarProduto, VisualizarProduto, VisualizarProduto2 };
