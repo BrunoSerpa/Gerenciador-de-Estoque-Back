@@ -5,7 +5,7 @@ import { StartConnection, EndConnection, Query } from "../services/postgres";
 
 import { Marca } from "../types/Marca";
 import { Nome, NomeAtualizar, NomeVisualizar } from "../types/Nome";
-import { Produto, CadastrarProduto, VisualizarProduto, AtualizarProduto } from "../types/Produto";
+import { Produto, CadastrarProduto, VisualizarProduto, AtualizarProduto, VisualizarProduto2 } from "../types/Produto";
 import { RespostaPadrao } from "../types/Response";
 
 const router = express.Router();
@@ -92,6 +92,56 @@ router.post(
     }
 );
 
+router.get(
+    "/:id",
+    async function (req: Request, res: Response) {
+        const { id } = req.params;
+
+        let bdConn: Pool | null = null;
+        try {
+            bdConn = await StartConnection();
+            const resultQuery = await Query<Produto>(
+                bdConn,
+                "SELECT * FROM produto where id = $1;",
+                [id]
+            );
+
+            const resultadoNomes = await Query(
+                bdConn,
+                "SELECT nome FROM nome where id_produto = $1;",
+                [id]
+            );
+
+            const produto: Produto = resultQuery.rows[0];
+            const produtosFormatados: VisualizarProduto2 = {
+                garantia: produto.garantia,
+                validade: produto.validade,
+                preco: produto.preco,
+                nomes: resultadoNomes.rows,
+                marca: produto.id_marca
+            };
+
+            const retorno = {
+                errors: [],
+                msg: ["Produtos listados com sucesso"],
+                data: {
+                    rows: produtosFormatados,
+                    fields: resultQuery.fields
+                }
+            } as RespostaPadrao;
+            res.status(200).send(retorno);
+        } catch (err) {
+            const retorno = {
+                errors: [(err as Error).message],
+                msg: ["Falha ao listar produtos"],
+                data: null
+            } as RespostaPadrao;
+            res.status(500).send(retorno);
+        } finally {
+            if (bdConn) EndConnection(bdConn);
+        };
+    }
+);
 router.get(
     "",
     async function (_req: Request, res: Response) {

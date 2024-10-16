@@ -83,6 +83,47 @@ router.post("", function (req, res) {
         ;
     });
 });
+router.get("/:id", function (req, res) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const { id } = req.params;
+        let bdConn = null;
+        try {
+            bdConn = yield (0, postgres_1.StartConnection)();
+            const resultQuery = yield (0, postgres_1.Query)(bdConn, "SELECT * FROM produto where id = $1;", [id]);
+            const resultadoNomes = yield (0, postgres_1.Query)(bdConn, "SELECT nome FROM nome where id_produto = $1;", [id]);
+            const produto = resultQuery.rows[0];
+            const produtosFormatados = {
+                garantia: produto.garantia,
+                validade: produto.validade,
+                preco: produto.preco,
+                nomes: resultadoNomes.rows,
+                marca: produto.id_marca
+            };
+            const retorno = {
+                errors: [],
+                msg: ["Produtos listados com sucesso"],
+                data: {
+                    rows: produtosFormatados,
+                    fields: resultQuery.fields
+                }
+            };
+            res.status(200).send(retorno);
+        }
+        catch (err) {
+            const retorno = {
+                errors: [err.message],
+                msg: ["Falha ao listar produtos"],
+                data: null
+            };
+            res.status(500).send(retorno);
+        }
+        finally {
+            if (bdConn)
+                (0, postgres_1.EndConnection)(bdConn);
+        }
+        ;
+    });
+});
 router.get("", function (_req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         let bdConn = null;
