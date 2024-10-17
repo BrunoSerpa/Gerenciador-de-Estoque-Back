@@ -11,6 +11,7 @@ const Itens_1 = require("./endpoints/Itens");
 const Marca_1 = require("./endpoints/Marca");
 const Nomes_1 = require("./endpoints/Nomes");
 const Produtos_1 = require("./endpoints/Produtos");
+const Vendas_1 = require("./endpoints/Vendas");
 require("dotenv-ts").config();
 const PORT = process.env.PORT || 3001;
 const app = (0, express_1.default)();
@@ -34,6 +35,7 @@ app.listen(PORT, function () {
     console.log(`Link Online: http://${ip}:${PORT}`);
 });
 app.use("/cadastro", Cadastro_1.CadastroRouter);
+app.use("/venda", Vendas_1.VendaRouter);
 app.use("/item", Itens_1.ItemRouter);
 app.use("/marcas", Marca_1.MarcaRouter);
 app.use("/nomes", Nomes_1.NomesRouter);

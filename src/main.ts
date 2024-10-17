@@ -7,6 +7,7 @@ import { ItemRouter } from "./endpoints/Itens";
 import { MarcaRouter } from "./endpoints/Marca";
 import { NomesRouter } from "./endpoints/Nomes";
 import { ProdutoRouter } from "./endpoints/Produtos";
+import { VendaRouter } from "./endpoints/Vendas";
 
 require("dotenv-ts").config();
 
@@ -39,6 +40,7 @@ app.listen(
 );
 
 app.use("/cadastro", CadastroRouter);
+app.use("/venda", VendaRouter);
 app.use("/item", ItemRouter);
 app.use("/marcas", MarcaRouter);
 app.use("/nomes", NomesRouter);
