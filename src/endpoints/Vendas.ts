@@ -35,10 +35,7 @@ router.post(
                 for (const item of itens) {
                     const resultadoItem = await Query(
                         bdConn,
-                        `SELECT id FROM item 
-                         WHERE id_produto = $1 AND id_venda IS NULL 
-                         ORDER BY data_compra ASC 
-                         LIMIT 1;`,
+                        `SELECT id FROM item WHERE id_produto = $1 AND id_venda IS NULL ORDER BY data_compra ASC LIMIT 1;`,
                         [item.id_produto]
                     );
 
@@ -50,9 +47,7 @@ router.post(
 
                     await Query(
                         bdConn,
-                        `UPDATE item 
-                         SET id_venda = $1, preco_venda = $2 
-                         WHERE id = $3;`,
+                        `UPDATE item SET id_venda = $1, preco_venda = $2 WHERE id = $3;`,
                         [id_venda, item.preco, id_item]
                     );
                 }
@@ -161,7 +156,8 @@ router.get(
                 return {
                     id: venda.id,
                     data_venda: venda.data_venda,
-                    titulo: venda.titulo || undefined,
+                    frete: venda.frete,
+                    titulo: venda.titulo,
                     itens: resultQueryItens.rows
                 };
             });
@@ -204,41 +200,72 @@ router.patch(
         try {
             bdConn = await StartConnection();
 
+            const itensResult = await Query(
+                bdConn,
+                `SELECT id, id_produto, preco_venda FROM item WHERE id_venda = $1;`,
+                [id]
+            );
+
+            const queries: Array<{ query: string; params: any[] }> = [];
+            const itens_excluidos = itensResult.rows;
+
+            for (const item of itens) {
+                let resultadoItem = itens_excluidos.find((it: {id_produto: number}) => it.id_produto === item.id_produto);
+
+                if (resultadoItem) {
+                    queries.push({
+                        query: `UPDATE item SET preco_venda = $1 WHERE id = $2;`,
+                        params: [item.preco, resultadoItem.id]
+                    });
+
+                    const index = itens_excluidos.indexOf(resultadoItem);
+                    if (index !== -1) itens_excluidos.splice(index, 1);
+                } else {
+                    const resultadoItemDisponivel = await Query(
+                        bdConn,
+                        `SELECT id FROM item 
+                         WHERE id_produto = $1 AND id_venda IS NULL 
+                         ORDER BY data_compra ASC 
+                         LIMIT 1;`,
+                        [item.id_produto]
+                    );
+
+                    if (resultadoItemDisponivel.rows.length === 0) {
+                        throw new Error(`Produto com ID ${item.id_produto} não disponível para venda.`);
+                    }
+
+                    const id_item = resultadoItemDisponivel.rows[0].id;
+
+                    queries.push({
+                        query: `UPDATE item SET id_venda = $1, preco_venda = $2 WHERE id = $3;`,
+                        params: [id, item.preco, id_item]
+                    });
+                }
+            }
+
+            for (const item of itens_excluidos) {
+                queries.push({
+                    query: `UPDATE item SET id_venda = NULL, preco_venda = NULL WHERE id = $1;`,
+                    params: [item.id]
+                });
+            }
+
+            for (const { query, params } of queries) {
+                await Query(bdConn, query, params);
+            }
+
             let valoresQuery: Array<string> = [];
             if (data_venda !== undefined) valoresQuery.push(`data_venda = '${data_venda}'`);
             if (frete !== undefined) valoresQuery.push(`frete = '${frete}'`);
+            else valoresQuery.push(`frete = NULL`);
             if (titulo !== undefined) valoresQuery.push(`titulo = '${titulo}'`);
+            else valoresQuery.push(`titulo = NULL`);
 
-            await Query<AtualizarVenda>(
+            await Query(
                 bdConn,
                 `UPDATE venda SET ${valoresQuery.join(", ")} WHERE id = ${id};`,
                 []
             );
-
-            for (const item of itens) {
-                const resultadoItem = await Query(
-                    bdConn,
-                    `SELECT id FROM item 
-                     WHERE id_produto = $1 AND id_venda = $2 
-                     ORDER BY data_compra ASC 
-                     LIMIT 1;`,
-                    [item.id_produto, id]
-                );
-
-                if (resultadoItem.rows.length === 0) {
-                    throw new Error(`Produto com ID ${item.id_produto} não disponível para atualização de venda.`);
-                }
-
-                const id_item = resultadoItem.rows[0].id;
-
-                await Query(
-                    bdConn,
-                    `UPDATE item 
-                     SET preco_venda = $1 
-                     WHERE id = $2;`,
-                    [item.preco, id_item]
-                );
-            }
 
             const retorno = {
                 errors: [],
@@ -252,6 +279,7 @@ router.patch(
                 msg: ["Falha ao atualizar venda"],
                 data: null,
             } as RespostaPadrao;
+
             res.status(500).send(retorno);
         } finally {
             if (bdConn) EndConnection(bdConn);
