@@ -27,7 +27,7 @@ router.post(
                 bdConn,
                 `INSERT INTO cadastro (data_cadastro, frete, titulo, custo_itens) 
                 VALUES ($1, $2, $3, 0) RETURNING id;`,
-                [data_cadastro, frete, titulo]
+                [data_cadastro, frete ?? null, titulo ?? null]
             );
 
             const id_cadastro = resultadoCadastro.rows[0].id;

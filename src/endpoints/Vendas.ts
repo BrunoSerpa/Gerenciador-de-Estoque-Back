@@ -26,7 +26,7 @@ router.post(
                 bdConn,
                 `INSERT INTO venda (data_venda, frete, titulo, custo_itens) 
                 VALUES ($1, $2, $3, 0) RETURNING id;`,
-                [data_venda, frete, titulo]
+                [data_venda, frete ?? null, titulo ?? null]
             );
 
             const id_venda = resultadoVenda.rows[0].id;

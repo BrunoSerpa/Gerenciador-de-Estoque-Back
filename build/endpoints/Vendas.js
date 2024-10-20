@@ -24,7 +24,7 @@ router.post("", function (req, res) {
         try {
             bdConn = yield (0, postgres_1.StartConnection)();
             const resultadoVenda = yield (0, postgres_1.Query)(bdConn, `INSERT INTO venda (data_venda, frete, titulo, custo_itens) 
-                VALUES ($1, $2, $3, 0) RETURNING id;`, [data_venda, frete, titulo]);
+                VALUES ($1, $2, $3, 0) RETURNING id;`, [data_venda, frete !== null && frete !== void 0 ? frete : null, titulo !== null && titulo !== void 0 ? titulo : null]);
             const id_venda = resultadoVenda.rows[0].id;
             try {
                 for (const item of itens) {

@@ -24,7 +24,7 @@ router.post("", function (req, res) {
         try {
             bdConn = yield (0, postgres_1.StartConnection)();
             const resultadoCadastro = yield (0, postgres_1.Query)(bdConn, `INSERT INTO cadastro (data_cadastro, frete, titulo, custo_itens) 
-                VALUES ($1, $2, $3, 0) RETURNING id;`, [data_cadastro, frete, titulo]);
+                VALUES ($1, $2, $3, 0) RETURNING id;`, [data_cadastro, frete !== null && frete !== void 0 ? frete : null, titulo !== null && titulo !== void 0 ? titulo : null]);
             const id_cadastro = resultadoCadastro.rows[0].id;
             try {
                 for (const item of itens) {
