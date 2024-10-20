@@ -47,9 +47,10 @@ router.post("", function (req, res) {
                 };
                 res.status(200).send(retorno);
             }
-            catch (err) {
+            catch (itemError) {
+                yield (0, postgres_1.Query)(bdConn, `DELETE FROM venda WHERE id = $1;`, [id_venda]);
                 const retorno = {
-                    errors: [err.message],
+                    errors: [itemError.message],
                     msg: ["Falha ao cadastrar itens na venda"],
                     data: null,
                 };

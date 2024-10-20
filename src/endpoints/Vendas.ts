@@ -8,7 +8,6 @@ import { VisualizarItem2 } from "../types/Item";
 
 const router = express.Router();
 
-
 router.post(
     "",
     async function (req: Request, res: Response) {
@@ -64,12 +63,19 @@ router.post(
                     data: resultadoVenda.rows[0],
                 } as RespostaPadrao;
                 res.status(200).send(retorno);
-            } catch (err) {
+            } catch (itemError) {
+                await Query(
+                    bdConn,
+                    `DELETE FROM venda WHERE id = $1;`,
+                    [id_venda]
+                );
+
                 const retorno = {
-                    errors: [(err as Error).message],
+                    errors: [(itemError as Error).message],
                     msg: ["Falha ao cadastrar itens na venda"],
                     data: null,
                 } as RespostaPadrao;
+
                 res.status(500).send(retorno);
             }
         } catch (err) {
@@ -85,7 +91,6 @@ router.post(
         }
     }
 );
-
 
 router.get(
     "",
