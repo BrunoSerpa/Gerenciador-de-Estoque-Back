@@ -49,7 +49,7 @@ router.post(
             const resultadoProduto = await Query(
                 bdConn,
                 "INSERT INTO produto (id_marca, garantia, validade, preco, quantidade) VALUES ($1, $2, $3, $4, 0) RETURNING id;",
-                [id_marca, garantia, validade, preco]
+                [id_marca, garantia, validade?? null, preco]
             );
 
             const id_produto = resultadoProduto.rows[0].id;
@@ -252,6 +252,7 @@ router.patch(
             valoresQuery.push(`id_marca = '${id_marca}'`);
             if (garantia !== undefined) valoresQuery.push(`garantia = '${garantia}'`);
             if (validade !== undefined) valoresQuery.push(`validade = '${validade}'`);
+            else valoresQuery.push(`validade = Null`);
             if (preco !== undefined) valoresQuery.push(`preco = '${preco}'`);
 
             await Query<AtualizarProduto>(

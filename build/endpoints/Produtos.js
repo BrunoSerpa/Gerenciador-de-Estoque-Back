@@ -42,7 +42,7 @@ router.post("", function (req, res) {
                 id_marca = marca;
             }
             ;
-            const resultadoProduto = yield (0, postgres_1.Query)(bdConn, "INSERT INTO produto (id_marca, garantia, validade, preco, quantidade) VALUES ($1, $2, $3, $4, 0) RETURNING id;", [id_marca, garantia, validade, preco]);
+            const resultadoProduto = yield (0, postgres_1.Query)(bdConn, "INSERT INTO produto (id_marca, garantia, validade, preco, quantidade) VALUES ($1, $2, $3, $4, 0) RETURNING id;", [id_marca, garantia, validade !== null && validade !== void 0 ? validade : null, preco]);
             const id_produto = resultadoProduto.rows[0].id;
             if (nomes) {
                 try {
@@ -209,6 +209,8 @@ router.patch("/:id", function (req, res) {
                 valoresQuery.push(`garantia = '${garantia}'`);
             if (validade !== undefined)
                 valoresQuery.push(`validade = '${validade}'`);
+            else
+                valoresQuery.push(`validade = Null`);
             if (preco !== undefined)
                 valoresQuery.push(`preco = '${preco}'`);
             yield (0, postgres_1.Query)(bdConn, `UPDATE produto SET ${valoresQuery.join(", ")} WHERE id = $1;`, [id]);
