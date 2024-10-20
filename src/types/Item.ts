@@ -2,8 +2,10 @@ interface Item {
     id: number;
     id_cadastro: number;
     id_produto: number;
+    id_venda?: number;
     data_compra: Date;
     preco: number;
+    preco_venda?: number;
 };
 
 interface AtualizarItem {

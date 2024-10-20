@@ -10,15 +10,15 @@ interface Venda {
 
 interface CadastrarVenda {
     data_venda: Date;
-    frete: number;
-    titulo: string;
+    frete?: number;
+    titulo?: string;
     itens: CadastrarItem[];
 };
 
 interface AtualizarVenda {
     data_venda: Date;
-    frete: number;
-    titulo: string;
+    frete?: number;
+    titulo?: string;
     itens: AtualizarItem[];
 };
 
@@ -26,7 +26,6 @@ interface VisualizarVenda {
     id: number;
     data_venda: Date;
     titulo: string;
-    custo_itens: number;
     total: number;
 };
 
